@@ -1,0 +1,32 @@
+---
+// Column / reading list
+const columns = [
+  { date: "2026.03.20", cat: "星の話", title: "春分のホロスコープ — 種をまく前にひと呼吸。", style: "" },
+  { date: "2026.03.12", cat: "タロット", title: "「節制」のカードが教えてくれる、整えるという技術。", style: "background-image:linear-gradient(135deg,rgba(44,48,71,.22),rgba(20,17,13,.05)),repeating-linear-gradient(45deg,transparent 0 16px,rgba(20,17,13,.04) 16px 17px);" },
+  { date: "2026.02.28", cat: "暮らしの占い", title: "満月にすること、新月に書くこと。月のリズム入門。", style: "background-image:linear-gradient(135deg,rgba(168,137,92,.28),rgba(20,17,13,.1)),repeating-linear-gradient(45deg,transparent 0 16px,rgba(20,17,13,.04) 16px 17px);" },
+  { date: "2026.02.14", cat: "四柱推命", title: "命式の読みかた、はじめの三歩。", style: "background-image:linear-gradient(135deg,rgba(20,17,13,.28),rgba(168,137,92,.12)),repeating-linear-gradient(45deg,transparent 0 16px,rgba(20,17,13,.04) 16px 17px);" },
+  { date: "2026.02.02", cat: "エッセイ", title: "占いを「使う」ということ — 答えではなく、選ぶ余白を持つ。", style: "background-image:linear-gradient(135deg,rgba(168,137,92,.18),rgba(44,48,71,.18)),repeating-linear-gradient(45deg,transparent 0 16px,rgba(20,17,13,.04) 16px 17px);" },
+  { date: "2026.01.20", cat: "星の話", title: "水星逆行のあいだ、見直しておきたい三つのこと。", style: "background-image:linear-gradient(135deg,rgba(20,17,13,.18),rgba(168,137,92,.18)),repeating-linear-gradient(45deg,transparent 0 16px,rgba(20,17,13,.04) 16px 17px);" },
+];
+---
+<section class="column" id="column">
+  <div class="ornament">
+    <span class="en">Column</span>
+    <span class="jp">読みもの</span>
+    <span class="rule"></span>
+  </div>
+
+  <div class="column-grid">
+    {columns.map((c) => (
+      <article class="col-card">
+        <div class="col-thumb" style={c.style}></div>
+        <div class="col-meta"><span class="col-date">{c.date}</span><span class="col-cat">{c.cat}</span></div>
+        <h3 class="col-title">{c.title}</h3>
+      </article>
+    ))}
+  </div>
+
+  <div class="col-actions">
+    <a class="ghost-pill" href="#"><span>コラム一覧へ</span><span class="arr"></span></a>
+  </div>
+</section>

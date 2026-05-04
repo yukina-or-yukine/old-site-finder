@@ -1,4 +1,5 @@
 /* ───────────── design tokens & globals ───────────── */
+@use 'variables' as *;
 :root{
   --ink:#14110d; --ink-2:#2a2520; --ink-soft:#5a5147;
   --paper:#f6f1e7; --paper-2:#ede5d3; --paper-3:#e3d9c2;
@@ -9,6 +10,7 @@
   --sans:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;
   --latin:"Sorts Mill Goudy","Shippori Mincho B1",serif;
 }
+
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:#fff;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
@@ -28,7 +30,7 @@ img{display:block;max-width:100%}
 .cta-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--gold-soft)}
 
 /* ── topbar nav & hamburger ── */
-.topbar-nav{display:flex;align-items:center;gap:28px}
+.topbar-nav{display:none;align-items:center;gap:28px}
 .topbar-nav a{font-family:var(--serif);font-weight:400;font-size:14px;letter-spacing:.18em;color:var(--ink);transition:color .25s}
 .topbar-nav a:hover{color:var(--gold)}
 .hamburger{display:none;background:none;border:none;cursor:pointer;color:var(--ink);font-size:24px;padding:4px 6px;line-height:1}
@@ -96,7 +98,7 @@ img{display:block;max-width:100%}
 .case-title{font-family:var(--serif);font-weight:400;font-size:17px;line-height:1.7;letter-spacing:.06em;color:var(--ink);min-height:84px}
 .case-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:18px;border-top:1px solid var(--rule-soft)}
 .tags{display:flex;gap:8px;flex-wrap:wrap}
-.tag{font-family:var(--sans);font-size:11px;letter-spacing:.16em;color:var(--ink-soft);border:1px solid var(--rule);border-radius:20px;padding:4px 10px}
+.tag{font-family:var(--sans);font-size:11px;letter-spacing:.16em;color:var(--ink-soft);padding:4px 10px}
 .more{font-family:var(--latin);font-weight:400;font-size:13px;letter-spacing:.24em;color:var(--gold);display:inline-flex;align-items:center;gap:6px}
 .more::after{content:"→"}
 
@@ -308,9 +310,10 @@ footer{padding:72px 60px 32px;background:#fff}
 }
 
 /* ─── StickyHeader ───────────────────────────────── */
+.sh-nav .nav-item{display:flex; flex-direction:column; align-items:center; gap:0px;}
 @media (max-width: 1024px) {
   .sticky-header{padding:0 32px}
-  .sh-nav{gap:24px}
+  .sh-nav{gap:16px}
 }
 @media (max-width: 768px) {
   .sticky-header{padding:0 20px}

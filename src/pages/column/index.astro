@@ -1,0 +1,101 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TopBar from "../../components/TopBar.astro";
+import StickyHeader from "../../components/StickyHeader.astro";
+import SiteFooter from "../../components/SiteFooter.astro";
+import { getCollection } from "astro:content";
+
+const allPosts = await getCollection("column", ({ data }) => !data.draft);
+const posts = allPosts.sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const fmt = (d: Date) =>
+  [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join(".");
+
+const slugOf = (id: string) => id.replace(/\.[^.]+$/, "");
+---
+<BaseLayout title="コラム 読みもの | 飛兎竜文堂">
+  <StickyHeader />
+  <div class="stage">
+    <TopBar />
+
+    <section class="col-page">
+      <div class="ornament col-page-head">
+        <span class="en">Column</span>
+        <span class="jp">読みもの</span>
+        <span class="rule"></span>
+      </div>
+
+      {posts.length === 0 ? (
+        <p class="col-empty">記事はまだありません。</p>
+      ) : (
+        <div class="column-grid">
+          {posts.map((post) => (
+            <a class="col-card" href={`/column/${slugOf(post.id)}`}>
+              <div
+                class="col-thumb"
+                style={`background-image:url(${post.data.thumbnail})`}
+              ></div>
+              <div class="col-meta">
+                <span class="col-date">{fmt(post.data.date)}</span>
+                <span class="col-cat">{post.data.category}</span>
+              </div>
+              <h3 class="col-title">{post.data.title}</h3>
+              <p class="col-desc">{post.data.description}</p>
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
+
+    <SiteFooter />
+  </div>
+</BaseLayout>
+
+<style>
+  .col-page {
+    padding: 80px 60px 120px;
+  }
+  .col-page-head {
+    margin-bottom: 64px;
+  }
+  .col-thumb {
+    background-size: cover;
+    background-position: center;
+    background-color: var(--paper-2);
+    /* gradient fallback when image is absent */
+    background-image:
+      linear-gradient(135deg, rgba(168,137,92,.18), rgba(20,17,13,.08)),
+      repeating-linear-gradient(45deg, transparent 0 16px, rgba(20,17,13,.04) 16px 17px);
+  }
+  .col-desc {
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--ink-soft);
+    letter-spacing: .04em;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .col-empty {
+    text-align: center;
+    color: var(--ink-soft);
+    padding: 80px 0;
+    font-family: var(--serif);
+    letter-spacing: .12em;
+  }
+
+  @media (max-width: 1024px) {
+    .col-page { padding: 64px 40px 96px; }
+  }
+  @media (max-width: 768px) {
+    .col-page { padding: 48px 24px 80px; }
+    .col-page-head { margin-bottom: 44px; }
+  }
+  @media (max-width: 640px) {
+    .col-page { padding: 40px 16px 64px; }
+  }
+</style>

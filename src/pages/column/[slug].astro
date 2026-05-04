@@ -1,0 +1,282 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TopBar from "../../components/TopBar.astro";
+import StickyHeader from "../../components/StickyHeader.astro";
+import SiteFooter from "../../components/SiteFooter.astro";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("column");
+  return posts.map((post) => ({
+    params: { slug: post.id.replace(/\.[^.]+$/, "") },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const allPosts = await getCollection("column", ({ data }) => !data.draft);
+const related = allPosts
+  .filter(
+    (p) =>
+      p.id !== post.id &&
+      p.data.category === post.data.category
+  )
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+
+const fmt = (d: Date) =>
+  [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join(".");
+
+const slugOf = (id: string) => id.replace(/\.[^.]+$/, "");
+---
+<BaseLayout title={`${post.data.title} | 飛兎竜文堂`}>
+  <StickyHeader />
+  <div class="stage">
+    <TopBar />
+
+    <div class="art-wrap">
+      <!-- パンくずナビ -->
+      <nav class="art-bread" aria-label="パンくずリスト">
+        <a href="/">Top</a>
+        <span class="art-bread-sep">›</span>
+        <a href="/column">読みもの</a>
+        <span class="art-bread-sep">›</span>
+        <span>{post.data.title}</span>
+      </nav>
+
+      <article class="art">
+        <!-- ヘッダー -->
+        <header class="art-header">
+          <div class="art-meta">
+            <span class="art-cat">{post.data.category}</span>
+            <time class="art-date" datetime={post.data.date.toISOString()}>
+              {fmt(post.data.date)}
+            </time>
+          </div>
+          <h1 class="art-title">{post.data.title}</h1>
+          <p class="art-desc">{post.data.description}</p>
+        </header>
+
+        <!-- サムネイル -->
+        <div class="art-thumb-wrap">
+          <img
+            class="art-thumb"
+            src={post.data.thumbnail}
+            alt={post.data.title}
+            width="1080"
+            height="640"
+          />
+        </div>
+
+        <!-- 本文 -->
+        <div class="art-body prose">
+          <Content />
+        </div>
+      </article>
+
+      <!-- 関連記事 -->
+      {related.length > 0 && (
+        <aside class="rel-wrap">
+          <div class="ornament rel-head">
+            <span class="en">Related</span>
+            <span class="jp">関連記事</span>
+            <span class="rule"></span>
+          </div>
+          <div class="column-grid rel-grid">
+            {related.map((p) => (
+              <a class="col-card" href={`/column/${slugOf(p.id)}`}>
+                <div
+                  class="col-thumb"
+                  style={`background-image:url(${p.data.thumbnail})`}
+                ></div>
+                <div class="col-meta">
+                  <span class="col-date">{fmt(p.data.date)}</span>
+                  <span class="col-cat">{p.data.category}</span>
+                </div>
+                <h3 class="col-title">{p.data.title}</h3>
+              </a>
+            ))}
+          </div>
+        </aside>
+      )}
+
+      <!-- 一覧へ戻るボタン -->
+      <div class="art-back">
+        <a class="ghost-pill" href="/column">
+          <span>コラム一覧へ</span><span class="arr"></span>
+        </a>
+      </div>
+    </div>
+
+    <SiteFooter />
+  </div>
+</BaseLayout>
+
+<style>
+  /* ── ページ全体 ── */
+  .art-wrap {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 56px 40px 120px;
+  }
+
+  /* ── パンくず ── */
+  .art-bread {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--latin);
+    font-size: 12px;
+    letter-spacing: .18em;
+    color: var(--ink-soft);
+    margin-bottom: 48px;
+  }
+  .art-bread a { transition: color .25s; }
+  .art-bread a:hover { color: var(--gold); }
+  .art-bread-sep { opacity: .5; }
+
+  /* ── 記事ヘッダー ── */
+  .art-header { margin-bottom: 40px; }
+  .art-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .art-cat {
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: .22em;
+    color: #fff;
+    background: var(--gold);
+    padding: 4px 14px;
+  }
+  .art-date {
+    font-family: var(--latin);
+    font-size: 14px;
+    letter-spacing: .18em;
+    color: var(--gold);
+  }
+  .art-title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 1.65;
+    letter-spacing: .08em;
+    color: var(--ink);
+    margin: 0 0 18px;
+    text-wrap: pretty;
+  }
+  .art-desc {
+    font-size: 15px;
+    line-height: 2;
+    color: var(--ink-soft);
+    letter-spacing: .05em;
+    margin: 0;
+    padding-left: 18px;
+    border-left: 2px solid var(--gold);
+  }
+
+  /* ── サムネイル ── */
+  .art-thumb-wrap {
+    margin-bottom: 56px;
+    overflow: hidden;
+  }
+  .art-thumb {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* ── 本文 ── */
+  .prose {
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 2.15;
+    letter-spacing: .06em;
+    color: var(--ink);
+  }
+  .prose :global(p) {
+    margin: 0 0 1.8em;
+  }
+  .prose :global(h2) {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 22px;
+    letter-spacing: .12em;
+    color: var(--ink);
+    margin: 2.4em 0 1em;
+    padding-bottom: .5em;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .prose :global(h3) {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 18px;
+    letter-spacing: .1em;
+    color: var(--ink);
+    margin: 2em 0 .8em;
+  }
+  .prose :global(ul),
+  .prose :global(ol) {
+    padding-left: 1.6em;
+    margin: 0 0 1.8em;
+  }
+  .prose :global(li) {
+    margin-bottom: .5em;
+  }
+  .prose :global(blockquote) {
+    margin: 2em 0;
+    padding: 1em 1.5em;
+    border-left: 3px solid var(--gold);
+    background: var(--paper-2);
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .prose :global(strong) { color: var(--ink); font-weight: 600; }
+  .prose :global(a) { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ── 関連記事 ── */
+  .rel-wrap {
+    margin-top: 96px;
+    padding-top: 80px;
+    border-top: 1px solid var(--rule-soft);
+  }
+  .rel-head { margin-bottom: 48px; }
+  .rel-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .col-thumb {
+    background-size: cover;
+    background-position: center;
+    background-color: var(--paper-2);
+    background-image:
+      linear-gradient(135deg, rgba(168,137,92,.18), rgba(20,17,13,.08)),
+      repeating-linear-gradient(45deg, transparent 0 16px, rgba(20,17,13,.04) 16px 17px);
+  }
+
+  /* ── 一覧へ戻る ── */
+  .art-back {
+    margin-top: 64px;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* ── レスポンシブ ── */
+  @media (max-width: 768px) {
+    .art-wrap { padding: 40px 24px 96px; }
+    .art-title { font-size: 24px; }
+    .prose { font-size: 16px; }
+    .rel-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+  @media (max-width: 640px) {
+    .art-wrap { padding: 32px 16px 80px; }
+    .art-title { font-size: 20px; line-height: 1.7; }
+    .prose { font-size: 15px; }
+    .rel-grid { grid-template-columns: 1fr !important; }
+  }
+</style>

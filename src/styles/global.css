@@ -27,6 +27,12 @@ img{display:block;max-width:100%}
 .cta-pill:hover{background:var(--gold);transform:translateY(-1px)}
 .cta-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--gold-soft)}
 
+/* ── topbar nav & hamburger ── */
+.topbar-nav{display:flex;align-items:center;gap:28px}
+.topbar-nav a{font-family:var(--serif);font-weight:400;font-size:14px;letter-spacing:.18em;color:var(--ink);transition:color .25s}
+.topbar-nav a:hover{color:var(--gold)}
+.hamburger{display:none;background:none;border:none;cursor:pointer;color:var(--ink);font-size:24px;padding:4px 6px;line-height:1}
+
 /* ── hero ── */
 .hero{position:relative;padding:60px 60px 96px}
 .hero-grid{display:grid;grid-template-columns:132px 1fr 132px;gap:48px;align-items:start}
@@ -187,14 +193,28 @@ footer{padding:72px 60px 32px;background:#fff}
 
 /* ─── TopBar ──────────────────────────────────────── */
 @media (max-width: 768px) {
-  .topbar{height:auto;min-height:64px;padding:12px 24px;flex-wrap:wrap;gap:8px}
+  .topbar{height:auto;min-height:64px;padding:12px 24px;flex-wrap:wrap;gap:8px;position:relative}
   .topbar .tag{font-size:11px;order:2;width:100%;text-align:center;padding-top:6px;border-top:1px solid var(--rule-soft)}
-  .topbar .right{width:100%;justify-content:flex-end}
+  .topbar .right{width:100%;justify-content:space-between}
+  /* nav becomes absolute dropdown */
+  .topbar-nav{
+    display:none;flex-direction:column;align-items:stretch;
+    position:absolute;top:100%;left:0;right:0;
+    background:var(--paper);border-bottom:1px solid var(--rule-soft);
+    padding:8px 24px 16px;gap:0;z-index:50;
+    box-shadow:0 8px 24px -8px rgba(20,17,13,.15)
+  }
+  .topbar-nav a{padding:13px 0;border-bottom:1px solid var(--rule-soft);font-size:15px;letter-spacing:.14em}
+  .topbar-nav a:last-child{border-bottom:none}
+  .topbar-nav.is-open{display:flex}
+  .hamburger{display:block}
+  /* nav-rail in Hero is superseded by the hamburger menu */
+  .nav-rail{display:none}
 }
 @media (max-width: 640px) {
   .topbar{flex-wrap:nowrap;padding:0 16px;height:64px}
   .topbar .tag{display:none}
-  .topbar .right{width:auto}
+  .topbar .right{width:100%;justify-content:space-between}
   .cta-pill{height:40px;padding:0 16px;font-size:13px;gap:8px}
 }
 
@@ -345,9 +365,10 @@ footer{padding:72px 60px 32px;background:#fff}
 }
 @media (max-width: 640px) {
   .hero{padding:20px 16px 40px}
-  .hero-headline{font-size:28px;line-height:1.6}
-  .hero-overline{font-size:13px}
-  .hero-sub{font-size:13px;line-height:2}
+  .hero-headline{font-size:28px;line-height:1.6;letter-spacing:0}
+  .hero-overline{font-size:13px;letter-spacing:.14em}
+  .hero-sub{font-size:13px;line-height:2;max-width:100%}
+  .hero-sub br{display:none}
   .hero-text-block{margin-top:16px}
   .nav-rail{gap:16px}
   .nav-rail .ic{width:24px;height:24px}

@@ -1,0 +1,248 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SubPageHeader from "../../components/SubPageHeader.astro";
+import SiteFooter from "../../components/SiteFooter.astro";
+---
+<BaseLayout title="ご相談・お問い合わせ | 飛兎竜文堂">
+  <div class="stage">
+    <SubPageHeader />
+
+    <div class="contact__page">
+      <div class="ornament contact__head">
+        <span class="en">Contact</span>
+        <span class="jp">ご相談・お問い合わせ</span>
+        <span class="rule"></span>
+      </div>
+
+      <div class="contact__wrap">
+        <form
+          name="contact"
+          method="POST"
+          data-netlify="true"
+          netlify-honeypot="bot-field"
+          action="/contact/thanks/"
+          class="contact__form"
+        >
+          <input type="hidden" name="form-name" value="contact" />
+          <p class="contact__honeypot"><input name="bot-field" /></p>
+
+          <!-- お問い合わせ項目 -->
+          <div class="contact__field">
+            <label for="type" class="contact__label">
+              お問い合わせ項目
+              <span class="contact__badge contact__badge--req">必須</span>
+            </label>
+            <div class="contact__select-wrap">
+              <select id="type" name="type" required class="contact__select">
+                <option value="">選択してください</option>
+                <option value="メール鑑定のご依頼">メール鑑定のご依頼</option>
+                <option value="対面鑑定のご依頼">対面鑑定のご依頼</option>
+                <option value="その他ご相談">その他ご相談</option>
+                <option value="その他お問い合わせ">その他お問い合わせ</option>
+              </select>
+              <span class="contact__select-arrow" aria-hidden="true"></span>
+            </div>
+          </div>
+
+          <!-- お名前 -->
+          <div class="contact__field">
+            <label for="name" class="contact__label">
+              お名前
+              <span class="contact__badge contact__badge--req">必須</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              required
+              placeholder="例）山田 花子"
+              autocomplete="name"
+              class="contact__input"
+            />
+          </div>
+
+          <!-- ふりがな -->
+          <div class="contact__field">
+            <label for="kana" class="contact__label">
+              ふりがな
+              <span class="contact__badge contact__badge--opt">任意</span>
+            </label>
+            <input
+              type="text"
+              id="kana"
+              name="kana"
+              placeholder="例）やまだ はなこ"
+              class="contact__input"
+            />
+          </div>
+
+          <!-- お問い合わせ本文 -->
+          <div class="contact__field">
+            <label for="message" class="contact__label">
+              お問い合わせ本文
+              <span class="contact__badge contact__badge--req">必須</span>
+            </label>
+            <textarea
+              id="message"
+              name="message"
+              required
+              rows="8"
+              placeholder="ご相談内容をご記入ください"
+              class="contact__textarea"
+            ></textarea>
+          </div>
+
+          <div class="contact__submit">
+            <button type="submit" class="cta-pill contact__btn">
+              <span class="dot"></span>送信する
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <SiteFooter />
+  </div>
+</BaseLayout>
+
+<style>
+  .contact__page {
+    padding: 80px 60px 120px;
+  }
+  .contact__head {
+    margin-bottom: 64px;
+  }
+  .contact__wrap {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  /* ハニーポット */
+  .contact__honeypot {
+    position: absolute;
+    visibility: hidden;
+    pointer-events: none;
+    margin: 0;
+  }
+
+  /* フォーム */
+  .contact__form {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+  .contact__field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .contact__label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 15px;
+    letter-spacing: .12em;
+    color: var(--ink);
+  }
+
+  /* バッジ */
+  .contact__badge {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: .2em;
+    padding: 3px 10px;
+  }
+  .contact__badge--req {
+    background: var(--gold);
+    color: #fff;
+  }
+  .contact__badge--opt {
+    color: var(--ink-soft);
+    border: 1px solid var(--rule);
+  }
+
+  /* 入力欄共通 */
+  .contact__input,
+  .contact__select,
+  .contact__textarea {
+    width: 100%;
+    font-family: var(--serif);
+    font-size: 16px;
+    letter-spacing: .06em;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--rule);
+    padding: 14px 18px;
+    outline: none;
+    transition: border-color .25s, box-shadow .25s;
+    border-radius: 0;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .contact__input:focus,
+  .contact__select:focus,
+  .contact__textarea:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(168,137,92,.12);
+  }
+  .contact__input::placeholder,
+  .contact__textarea::placeholder {
+    color: var(--ink-soft);
+    opacity: .6;
+  }
+  .contact__textarea {
+    resize: vertical;
+    min-height: 200px;
+    line-height: 1.9;
+  }
+
+  /* セレクトボックス */
+  .contact__select-wrap {
+    position: relative;
+  }
+  .contact__select {
+    cursor: pointer;
+    padding-right: 48px;
+  }
+  .contact__select-arrow {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-right: 1px solid var(--gold);
+    border-bottom: 1px solid var(--gold);
+    transform: translateY(-65%) rotate(45deg);
+    pointer-events: none;
+  }
+
+  /* 送信ボタン */
+  .contact__submit {
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+  }
+  .contact__btn {
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    height: 52px;
+    padding: 0 36px;
+    gap: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .contact__page { padding: 56px 24px 96px; }
+    .contact__head { margin-bottom: 48px; }
+  }
+  @media (max-width: 640px) {
+    .contact__page { padding: 40px 16px 80px; }
+    .contact__head { margin-bottom: 40px; }
+    .contact__form { gap: 28px; }
+    .contact__input,
+    .contact__select,
+    .contact__textarea { font-size: 15px; padding: 12px 14px; }
+  }
+</style>

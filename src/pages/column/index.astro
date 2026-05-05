@@ -1,8 +1,8 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import TopBar from "../../components/TopBar.astro";
-import StickyHeader from "../../components/StickyHeader.astro";
+import SubPageHeader from "../../components/SubPageHeader.astro";
 import SiteFooter from "../../components/SiteFooter.astro";
+import ColumnSidebar from "../../components/ColumnSidebar.astro";
 import { getCollection } from "astro:content";
 
 const allPosts = await getCollection("column", ({ data }) => !data.draft);
@@ -10,48 +10,102 @@ const posts = allPosts.sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
 
+const categories = [...new Set(posts.map((p) => p.data.category))];
+
+// ランキング取得（将来的にはこの関数をAPI連携に差し替える）
+function getRankings(src: typeof allPosts) {
+  return src
+    .filter((p) => p.data.rank != null)
+    .sort((a, b) => (a.data.rank as number) - (b.data.rank as number))
+    .slice(0, 5);
+}
+const rankings = getRankings(posts);
+
 const fmt = (d: Date) =>
   [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join(".");
 
 const slugOf = (id: string) => id.replace(/\.[^.]+$/, "");
 ---
-<BaseLayout title="コラム 読みもの | 飛兎竜文堂">
-  <StickyHeader />
+<BaseLayout title="コラム | 飛兎竜文堂">
   <div class="stage">
-    <TopBar />
+    <SubPageHeader />
 
     <section class="col-page">
       <div class="ornament col-page-head">
         <span class="en">Column</span>
-        <span class="jp">読みもの</span>
+        <span class="jp">コラム</span>
         <span class="rule"></span>
       </div>
 
-      {posts.length === 0 ? (
-        <p class="col-empty">記事はまだありません。</p>
-      ) : (
-        <div class="column-grid">
-          {posts.map((post) => (
-            <a class="col-card" href={`/column/${slugOf(post.id)}`}>
-              <div
-                class="col-thumb"
-                style={`background-image:url(${post.data.thumbnail})`}
-              ></div>
-              <div class="col-meta">
-                <span class="col-date">{fmt(post.data.date)}</span>
-                <span class="col-cat">{post.data.category}</span>
-              </div>
-              <h3 class="col-title">{post.data.title}</h3>
-              <p class="col-desc">{post.data.description}</p>
-            </a>
-          ))}
+      <div class="col-layout">
+        <!-- サイドバー -->
+        <aside class="col-sidebar">
+          <ColumnSidebar
+            categories={categories}
+            rankedPosts={rankings}
+            mode="filter"
+          />
+        </aside>
+
+        <!-- 記事一覧 -->
+        <div class="col-main">
+          {posts.length === 0 ? (
+            <p class="col-empty">記事はまだありません。</p>
+          ) : (
+            <div class="column-grid col-grid-list">
+              {posts.map((post) => (
+                <a
+                  class="col-card"
+                  href={`/column/${slugOf(post.id)}`}
+                  data-category={post.data.category}
+                >
+                  <div
+                    class="col-thumb"
+                    style={`background-image:url(${post.data.thumbnail})`}
+                  ></div>
+                  <div class="col-meta">
+                    <span class="col-date">{fmt(post.data.date)}</span>
+                    <span class="col-cat">{post.data.category}</span>
+                  </div>
+                  <h3 class="col-title">{post.data.title}</h3>
+                  <p class="col-desc">{post.data.description}</p>
+                </a>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </section>
 
     <SiteFooter />
   </div>
 </BaseLayout>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.category-btn');
+  const cards = document.querySelectorAll<HTMLElement>('.col-card');
+
+  function applyFilter(selected: string) {
+    buttons.forEach((b) => {
+      b.classList.toggle('is-active', b.dataset.category === selected);
+    });
+    cards.forEach((card) => {
+      (card as HTMLElement).style.display =
+        selected === 'all' || card.dataset.category === selected ? '' : 'none';
+    });
+  }
+
+  // URLパラメータから初期カテゴリを取得
+  const params = new URLSearchParams(window.location.search);
+  const initialCategory = params.get('category') ?? 'all';
+  applyFilter(initialCategory);
+
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      applyFilter(btn.dataset.category ?? 'all');
+    });
+  });
+</script>
 
 <style>
   .col-page {
@@ -60,11 +114,31 @@ const slugOf = (id: string) => id.replace(/\.[^.]+$/, "");
   .col-page-head {
     margin-bottom: 64px;
   }
+
+  /* 2カラムレイアウト */
+  .col-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+  .col-sidebar {
+    position: sticky;
+    top: 84px;
+  }
+
+  /* 記事グリッド（メインエリア内 2カラム） */
+  .col-grid-list {
+    grid-template-columns: repeat(2, 1fr) !important;
+    margin-top: 0;
+    gap: 40px 28px;
+  }
+
+  /* カードスタイル */
   .col-thumb {
     background-size: cover;
     background-position: center;
     background-color: var(--paper-2);
-    /* gradient fallback when image is absent */
     background-image:
       linear-gradient(135deg, rgba(168,137,92,.18), rgba(20,17,13,.08)),
       repeating-linear-gradient(45deg, transparent 0 16px, rgba(20,17,13,.04) 16px 17px);
@@ -90,12 +164,22 @@ const slugOf = (id: string) => id.replace(/\.[^.]+$/, "");
 
   @media (max-width: 1024px) {
     .col-page { padding: 64px 40px 96px; }
+    .col-layout { grid-template-columns: 220px 1fr; gap: 40px; }
   }
   @media (max-width: 768px) {
     .col-page { padding: 48px 24px 80px; }
     .col-page-head { margin-bottom: 44px; }
+    /* SP: 1カラム、サイドバーを上に積む */
+    .col-layout { grid-template-columns: 1fr; gap: 32px; }
+    .col-sidebar { position: static; }
+    /* サイドバー内ブロックを横並びに */
+    .col-sidebar :global(.cs) { flex-direction: row; flex-wrap: wrap; gap: 24px; }
+    .col-sidebar :global(.sidebar-block) { flex: 1 1 220px; }
+    .col-grid-list { grid-template-columns: repeat(2, 1fr) !important; gap: 28px 16px; }
   }
   @media (max-width: 640px) {
     .col-page { padding: 40px 16px 64px; }
+    .col-sidebar :global(.cs) { flex-direction: column; }
+    .col-grid-list { grid-template-columns: 1fr !important; gap: 24px; }
   }
 </style>

@@ -10,6 +10,7 @@ const column = defineCollection({
     category: z.string(),
     description: z.string(),
     draft: z.boolean().default(false),
+    rank: z.number().optional(),
   }),
 });
 

@@ -160,7 +160,7 @@ img{display:block;max-width:100%}
 .profile-name{font-family:var(--serif);font-weight:400;font-size:22px;letter-spacing:.16em;color:var(--ink)}
 .profile-name .read{font-size:13px;color:var(--ink-soft);letter-spacing:.24em;margin-left:10px}
 .profile-body{margin-top:22px;font-size:15px;line-height:2.2;color:var(--ink-soft);letter-spacing:.05em}
-.profile-meta{margin-top:32px;display:grid;grid-template-columns:repeat(3,auto);gap:24px;padding-top:24px;border-top:1px solid var(--rule-soft)}
+.profile-meta{margin-top:32px;display:grid;grid-template-columns:repeat(2,auto);gap:24px;padding-top:24px;border-top:1px solid var(--rule-soft)}
 .profile-meta .it .l{font-family:var(--latin);font-weight:400;font-size:11px;letter-spacing:.3em;color:var(--gold);text-transform:uppercase}
 .profile-meta .it .v{font-family:var(--serif);font-weight:400;font-size:15px;letter-spacing:.12em;color:var(--ink);margin-top:6px}
 
@@ -199,15 +199,16 @@ img{display:block;max-width:100%}
 footer{padding:72px 60px 32px;background:#fff}
 .foot-grid{display:grid;grid-template-columns:200px 1fr 1fr;gap:60px;align-items:start}
 .foot-brand{display:flex;flex-direction:column;align-items:flex-start;gap:18px}
-.foot-brand .mk{width:48px;height:48px}
-.foot-brand .nm{font-family:var(--serif);font-weight:400;font-size:24px;letter-spacing:.22em}
+.foot-brand-link{display:flex;flex-direction:column;align-items:flex-start;gap:18px;color:var(--ink)}
+.foot-brand-link:hover .nm{color:var(--gold)}
+.foot-logo{width:48px;height:auto}
+.foot-brand .nm{font-family:var(--serif);font-weight:400;font-size:24px;letter-spacing:.22em;transition:color .25s}
 .foot-brand .read{font-family:var(--latin);font-weight:400;font-size:13px;letter-spacing:.3em;color:var(--gold)}
 .foot-quote{font-family:var(--serif);font-weight:400;font-size:15px;line-height:2.1;color:var(--ink-soft);letter-spacing:.08em;border-left:1px solid var(--gold);padding:6px 0 6px 24px}
 .foot-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
 .foot-nav a{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--ink);transition:color .25s}
 .foot-nav a:hover{color:var(--gold)}
-.foot-nav .ic{width:34px;height:34px;display:grid;place-items:center}
-.foot-nav .ic svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.4}
+.foot-nav .ic{width:80px;height:auto;display:grid;place-items:center}
 .foot-nav .lbl{font-family:var(--serif);font-weight:400;font-size:13px;letter-spacing:.18em}
 .foot-bottom{margin-top:64px;padding-top:22px;border-top:1px solid var(--rule-soft);display:flex;align-items:center;justify-content:space-between;font-family:var(--latin);font-weight:400;font-size:12px;letter-spacing:.18em;color:var(--ink-soft)}
 .foot-bottom .sns{gap:12px}
@@ -232,6 +233,9 @@ footer{padding:72px 60px 32px;background:#fff}
 .sh-cta{display:inline-flex;align-items:center;gap:10px;height:42px;padding:0 22px;border-radius:42px;background:var(--ink);color:#fff;font-family:var(--sans);font-weight:500;font-size:13px;letter-spacing:.08em;transition:background .25s,transform .25s}
 .sh-cta:hover{background:var(--gold);transform:translateY(-1px)}
 .sh-cta .dot{width:5px;height:5px;border-radius:50%;background:var(--gold-soft)}
+
+/* ── sub-page sticky header ── */
+.sub-header{position:sticky;top:0;z-index:100;height:72px;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--rule-soft);display:flex;align-items:center;justify-content:space-between;padding:0 48px}
 
 /* ═══════════════════════════════════════════════════
    RESPONSIVE  –  desktop first
@@ -358,16 +362,19 @@ footer{padding:72px 60px 32px;background:#fff}
 .sh-nav .nav-item{display:flex; flex-direction:column; align-items:center; gap:0px;}
 @media (max-width: 1024px) {
   .sticky-header{padding:0 32px}
+  .sub-header{padding:0 32px}
   .sh-nav{gap:16px}
 }
 @media (max-width: 768px) {
   .sticky-header{padding:0 20px}
+  .sub-header{padding:0 20px}
   .sh-nav{gap:16px}
   .sh-nav .en{display:none}
   .sh-nav a{font-size:13px}
 }
 @media (max-width: 640px) {
   .sticky-header{padding:0 16px;height:60px}
+  .sub-header{padding:0 16px;height:60px}
   .sh-nav{display:none}
   .sh-brand .read{display:none}
   .sh-cta{font-size:12px;padding:0 14px;height:36px;gap:7px}

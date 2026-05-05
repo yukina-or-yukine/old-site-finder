@@ -1,7 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import TopBar from "../../components/TopBar.astro";
-import StickyHeader from "../../components/StickyHeader.astro";
+import SubPageHeader from "../../components/SubPageHeader.astro";
 import SiteFooter from "../../components/SiteFooter.astro";
 import CaseModal from "../../components/CaseModal.astro";
 import { getCollection } from "astro:content";
@@ -11,9 +10,8 @@ const sorted = allCases.sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 9
 ---
 
 <BaseLayout title="鑑定事例 一覧 | 飛兎竜文堂">
-  <StickyHeader />
   <div class="stage">
-    <TopBar />
+    <SubPageHeader />
 
     <section class="cases-list">
       <div class="cases-head cases-list__head">

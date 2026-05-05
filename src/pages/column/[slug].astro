@@ -1,8 +1,8 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import TopBar from "../../components/TopBar.astro";
-import StickyHeader from "../../components/StickyHeader.astro";
+import SubPageHeader from "../../components/SubPageHeader.astro";
 import SiteFooter from "../../components/SiteFooter.astro";
+import ColumnSidebar from "../../components/ColumnSidebar.astro";
 import { getCollection, render } from "astro:content";
 
 export async function getStaticPaths() {
@@ -17,14 +17,24 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 
 const allPosts = await getCollection("column", ({ data }) => !data.draft);
+
+// 関連コラム（同カテゴリ・最大4件）
 const related = allPosts
-  .filter(
-    (p) =>
-      p.id !== post.id &&
-      p.data.category === post.data.category
-  )
+  .filter((p) => p.id !== post.id && p.data.category === post.data.category)
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .slice(0, 3);
+  .slice(0, 4);
+
+// サイドバー用データ
+const categories = [...new Set(allPosts.map((p) => p.data.category))];
+
+// ランキング取得（将来的にはこの関数をAPI連携に差し替える）
+function getRankings(src: typeof allPosts) {
+  return src
+    .filter((p) => p.data.rank != null)
+    .sort((a, b) => (a.data.rank as number) - (b.data.rank as number))
+    .slice(0, 5);
+}
+const rankings = getRankings(allPosts);
 
 const fmt = (d: Date) =>
   [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join(".");
@@ -32,81 +42,94 @@ const fmt = (d: Date) =>
 const slugOf = (id: string) => id.replace(/\.[^.]+$/, "");
 ---
 <BaseLayout title={`${post.data.title} | 飛兎竜文堂`}>
-  <StickyHeader />
   <div class="stage">
-    <TopBar />
+    <SubPageHeader />
 
-    <div class="art-wrap">
-      <!-- パンくずナビ -->
-      <nav class="art-bread" aria-label="パンくずリスト">
-        <a href="/">Top</a>
-        <span class="art-bread-sep">›</span>
-        <a href="/column">読みもの</a>
-        <span class="art-bread-sep">›</span>
-        <span>{post.data.title}</span>
-      </nav>
+    <div class="det-page">
+      <div class="det-layout">
 
-      <article class="art">
-        <!-- ヘッダー -->
-        <header class="art-header">
-          <div class="art-meta">
-            <span class="art-cat">{post.data.category}</span>
-            <time class="art-date" datetime={post.data.date.toISOString()}>
-              {fmt(post.data.date)}
-            </time>
-          </div>
-          <h1 class="art-title">{post.data.title}</h1>
-          <p class="art-desc">{post.data.description}</p>
-        </header>
-
-        <!-- サムネイル -->
-        <div class="art-thumb-wrap">
-          <img
-            class="art-thumb"
-            src={post.data.thumbnail}
-            alt={post.data.title}
-            width="1080"
-            height="640"
+        <!-- サイドバー（左） -->
+        <aside class="det-sidebar">
+          <ColumnSidebar
+            categories={categories}
+            rankedPosts={rankings}
+            currentCategory={post.data.category}
+            mode="link"
           />
-        </div>
-
-        <!-- 本文 -->
-        <div class="art-body prose">
-          <Content />
-        </div>
-      </article>
-
-      <!-- 関連記事 -->
-      {related.length > 0 && (
-        <aside class="rel-wrap">
-          <div class="ornament rel-head">
-            <span class="en">Related</span>
-            <span class="jp">関連記事</span>
-            <span class="rule"></span>
-          </div>
-          <div class="column-grid rel-grid">
-            {related.map((p) => (
-              <a class="col-card" href={`/column/${slugOf(p.id)}`}>
-                <div
-                  class="col-thumb"
-                  style={`background-image:url(${p.data.thumbnail})`}
-                ></div>
-                <div class="col-meta">
-                  <span class="col-date">{fmt(p.data.date)}</span>
-                  <span class="col-cat">{p.data.category}</span>
-                </div>
-                <h3 class="col-title">{p.data.title}</h3>
-              </a>
-            ))}
-          </div>
         </aside>
-      )}
 
-      <!-- 一覧へ戻るボタン -->
-      <div class="art-back">
-        <a class="ghost-pill" href="/column">
-          <span>コラム一覧へ</span><span class="arr"></span>
-        </a>
+        <!-- メインコンテンツ（右） -->
+        <div class="det-main">
+
+          <!-- パンくずナビ -->
+          <nav class="art-bread" aria-label="パンくずリスト">
+            <a href="/">Top</a>
+            <span class="art-bread-sep">›</span>
+            <a href="/column">コラム</a>
+            <span class="art-bread-sep">›</span>
+            <span>{post.data.title}</span>
+          </nav>
+
+          <article class="art">
+            <header class="art-header">
+              <div class="art-meta">
+                <span class="art-cat">{post.data.category}</span>
+                <time class="art-date" datetime={post.data.date.toISOString()}>
+                  {fmt(post.data.date)}
+                </time>
+              </div>
+              <h1 class="art-title">{post.data.title}</h1>
+              <p class="art-desc">{post.data.description}</p>
+            </header>
+
+            <div class="art-thumb-wrap">
+              <img
+                class="art-thumb"
+                src={post.data.thumbnail}
+                alt={post.data.title}
+                width="1080"
+                height="640"
+              />
+            </div>
+
+            <div class="art-body prose">
+              <Content />
+            </div>
+          </article>
+
+          <!-- 関連コラム -->
+          {related.length > 0 && (
+            <aside class="rel-wrap">
+              <div class="ornament rel-head">
+                <span class="en">Related</span>
+                <span class="jp">関連コラム</span>
+                <span class="rule"></span>
+              </div>
+              <div class="column-grid rel-grid">
+                {related.map((p) => (
+                  <a class="col-card" href={`/column/${slugOf(p.id)}`}>
+                    <div
+                      class="col-thumb"
+                      style={`background-image:url(${p.data.thumbnail})`}
+                    ></div>
+                    <div class="col-meta">
+                      <span class="col-date">{fmt(p.data.date)}</span>
+                      <span class="col-cat">{p.data.category}</span>
+                    </div>
+                    <h3 class="col-title">{p.data.title}</h3>
+                  </a>
+                ))}
+              </div>
+            </aside>
+          )}
+
+          <!-- 一覧へ戻るボタン -->
+          <div class="art-back">
+            <a class="ghost-pill" href="/column">
+              <span>コラム一覧へ</span><span class="arr"></span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -115,11 +138,24 @@ const slugOf = (id: string) => id.replace(/\.[^.]+$/, "");
 </BaseLayout>
 
 <style>
-  /* ── ページ全体 ── */
-  .art-wrap {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 56px 40px 120px;
+  /* ── ページ外枠 ── */
+  .det-page {
+    padding: 56px 60px 120px;
+  }
+
+  /* ── 2カラムレイアウト ── */
+  .det-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+  .det-sidebar {
+    position: sticky;
+    top: 84px;
+  }
+  .det-main {
+    min-width: 0; /* グリッド内でのテキスト折り返しを保証 */
   }
 
   /* ── パンくず ── */
@@ -200,9 +236,7 @@ const slugOf = (id: string) => id.replace(/\.[^.]+$/, "");
     letter-spacing: .06em;
     color: var(--ink);
   }
-  .prose :global(p) {
-    margin: 0 0 1.8em;
-  }
+  .prose :global(p) { margin: 0 0 1.8em; }
   .prose :global(h2) {
     font-family: var(--serif);
     font-weight: 400;
@@ -222,13 +256,8 @@ const slugOf = (id: string) => id.replace(/\.[^.]+$/, "");
     margin: 2em 0 .8em;
   }
   .prose :global(ul),
-  .prose :global(ol) {
-    padding-left: 1.6em;
-    margin: 0 0 1.8em;
-  }
-  .prose :global(li) {
-    margin-bottom: .5em;
-  }
+  .prose :global(ol) { padding-left: 1.6em; margin: 0 0 1.8em; }
+  .prose :global(li) { margin-bottom: .5em; }
   .prose :global(blockquote) {
     margin: 2em 0;
     padding: 1em 1.5em;
@@ -240,15 +269,17 @@ const slugOf = (id: string) => id.replace(/\.[^.]+$/, "");
   .prose :global(strong) { color: var(--ink); font-weight: 600; }
   .prose :global(a) { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }
 
-  /* ── 関連記事 ── */
+  /* ── 関連コラム ── */
   .rel-wrap {
-    margin-top: 96px;
-    padding-top: 80px;
+    margin-top: 80px;
+    padding-top: 64px;
     border-top: 1px solid var(--rule-soft);
   }
-  .rel-head { margin-bottom: 48px; }
+  .rel-head { margin-bottom: 40px; }
   .rel-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    margin-top: 0;
+    gap: 28px 20px;
   }
   .col-thumb {
     background-size: cover;
@@ -267,16 +298,38 @@ const slugOf = (id: string) => id.replace(/\.[^.]+$/, "");
   }
 
   /* ── レスポンシブ ── */
+  @media (max-width: 1024px) {
+    .det-page { padding: 48px 40px 96px; }
+    .det-layout { grid-template-columns: 220px 1fr; gap: 40px; }
+    .rel-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  }
   @media (max-width: 768px) {
-    .art-wrap { padding: 40px 24px 96px; }
+    .det-page { padding: 40px 24px 80px; }
+    /* SP: 1カラム、サイドバーを記事下部に移動 */
+    .det-layout {
+      display: flex;
+      flex-direction: column;
+    }
+    .det-sidebar {
+      order: 2;
+      position: static;
+      /* サイドバー内を横並びに */
+    }
+    .det-sidebar :global(.cs) { flex-direction: row; flex-wrap: wrap; gap: 24px; }
+    .det-sidebar :global(.sidebar-block) { flex: 1 1 220px; }
+    .det-main {
+      order: 1;
+    }
+    .art-bread { margin-bottom: 32px; }
     .art-title { font-size: 24px; }
     .prose { font-size: 16px; }
     .rel-grid { grid-template-columns: repeat(2, 1fr) !important; }
   }
   @media (max-width: 640px) {
-    .art-wrap { padding: 32px 16px 80px; }
+    .det-page { padding: 32px 16px 64px; }
+    .det-sidebar :global(.cs) { flex-direction: column; }
     .art-title { font-size: 20px; line-height: 1.7; }
     .prose { font-size: 15px; }
-    .rel-grid { grid-template-columns: 1fr !important; }
+    .rel-grid { grid-template-columns: repeat(2, 1fr) !important; }
   }
 </style>

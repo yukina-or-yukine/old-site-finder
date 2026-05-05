@@ -51,11 +51,11 @@ img{display:block;max-width:100%}
 .hero-text-block{margin-top:36px}
 .hero-headline{max-width:780px}
 .hero-sub{margin:24px 0 0;font-size:15px;line-height:2.1;color:var(--ink-soft);letter-spacing:.04em;max-width:560px}
-.nav-rail{display:flex;flex-direction:column;gap:36px;align-items:center;padding-top:24px}
+.nav-rail{display:flex;flex-direction:column;gap:24px;align-items:center;}
 .nav-rail a{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--ink);transition:color .25s,transform .25s}
 .nav-rail a:hover{color:var(--gold);transform:translateY(-2px)}
-.nav-rail .ic{width:30px;height:30px;display:grid;place-items:center}
-.nav-rail .ic svg{width:26px;height:26px;stroke-width:1.4;fill:none;stroke:currentColor}
+.nav-rail .ic{width:80px;height:auto;display:grid;place-items:center}
+.nav-rail .ic svg{width:26px;height:auto;stroke-width:1.4;fill:none;stroke:currentColor}
 .nav-rail .lbl{font-family:var(--serif);font-weight:400;font-size:14px;letter-spacing:.18em;line-height:1.6;text-align:center}
 
 /* ── ornament & shared ── */
@@ -445,6 +445,6 @@ footer{padding:72px 60px 32px;background:#fff}
   .hero-sub br{display:none}
   .hero-text-block{margin-top:16px}
   .nav-rail{gap:16px}
-  .nav-rail .ic{width:24px;height:24px}
-  .nav-rail .ic svg{width:20px;height:20px}
+  .nav-rail .ic{width:24px;height:auto}
+  .nav-rail .ic svg{width:20px;height:auto}
 }

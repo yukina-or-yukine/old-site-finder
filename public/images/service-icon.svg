@@ -1,0 +1,30 @@
+<svg width="109" height="103" viewBox="0 0 109 103" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_g_92_655)">
+<path d="M18.1482 31.1918C23.2173 30.93 25.6924 32.6911 28.4292 36.7845C33.9743 45.0902 29.8809 56.9419 20.0521 59.4169C13.4599 61.059 8.12904 60.5355 3.34553 55.395C1.13226 53.0151 0.513488 48.1126 1.37024 45.0426C3.75009 36.3561 8.98578 31.6678 18.1244 31.1918H18.1482Z" fill="black"/>
+<path d="M53.5367 1.06303C68.625 -0.364885 72.2662 22.8863 61.3188 28.4552C54.4886 31.9298 44.5884 30.7874 41.685 22.8149C38.0438 12.7957 42.1372 2.13396 53.5367 1.06303Z" fill="black"/>
+<path d="M29.3812 69.6739C48.3248 68.1507 47.4205 98.6605 27.8818 97.8276C23.1935 97.6372 16.4585 92.6395 15.8636 87.8322C14.7212 78.8125 19.9569 70.4354 29.3812 69.6739Z" fill="black"/>
+<path d="M92.9709 31.8817C104.537 30.311 111.272 39.9494 106.298 50.4684C103.966 55.3947 95.5888 58.5123 90.5673 56.8702C84.808 54.9901 80.0483 49.9686 81.6666 43.5192C82.8327 38.8309 87.997 32.5481 92.9709 31.8817Z" fill="black"/>
+<path d="M76.0025 76.3614C83.1897 75.933 88.4968 84.3577 86.9499 90.8785C84.7366 100.136 72.2424 104.444 65.2932 97.9229C55.6548 88.8795 65.079 77.004 76.0025 76.3614Z" fill="black"/>
+<path d="M27.4854 31.2002L38.6707 21.2048" stroke="black" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/>
+<path d="M69.9088 21.1904L85.1399 33.8037" stroke="black" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/>
+<path d="M91.4894 60.4492L84.1118 76.6322" stroke="black" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/>
+<path d="M45.0168 88.1655H58.106" stroke="black" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/>
+<path d="M16.5238 60.6689L21.5215 71.6163" stroke="black" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/>
+<path d="M39.1862 68.6509L51.568 34.2228" stroke="black" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/>
+<path d="M54.6035 34.019L72.4525 74.0006" stroke="black" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/>
+<path d="M69.1832 74.7271L34.9132 50.2145" stroke="black" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/>
+<path d="M35.2594 45.0903H79.5247" stroke="black" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/>
+<path d="M79.8289 47.8623L42.2272 70.233" stroke="black" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"/>
+</g>
+<defs>
+<filter id="filter0_g_92_655" x="0" y="0" width="108.956" height="102.052" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.40000000596046448 0.40000000596046448" numOctaves="3" seed="2075" />
+<feDisplacementMap in="shape" scale="2" xChannelSelector="R" yChannelSelector="G" result="displacedImage" width="100%" height="100%" />
+<feMerge result="effect1_texture_92_655">
+<feMergeNode in="displacedImage"/>
+</feMerge>
+</filter>
+</defs>
+</svg>

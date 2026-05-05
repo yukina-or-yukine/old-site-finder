@@ -13,4 +13,17 @@ const column = defineCollection({
   }),
 });
 
-export const collections = { column };
+const cases = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/cases" }),
+  schema: z.object({
+    title: z.string(),
+    age: z.string(),
+    gender: z.string(),
+    area: z.string(),
+    image: z.string().optional(),
+    order: z.number().optional(),
+    draft: z.boolean().optional(),
+  }),
+});
+
+export const collections = { column, cases };

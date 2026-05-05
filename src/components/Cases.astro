@@ -1,28 +1,15 @@
 ---
-// Appraisal cases grid
-const cases = [
-  {
-    icon: `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="22" cy="24" r="9"></circle><circle cx="42" cy="26" r="7"></circle><path d="M8 52c2-8 7-12 14-12s12 4 14 12M30 52c1.5-6 5-9 12-9s10.5 3 12 9"></path></svg>`,
-    title: "仕事と暮らしの境を引き直し、本当に望む働き方が見えてきた事例。",
-    tags: ["40代","女性","京都"],
-  },
-  {
-    icon: `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M16 20l16 12 16-12M16 20v24h32V20"></path></svg>`,
-    title: "長く悩んだ恋の選択。流れを読み直し、自分から手放す勇気を得た事例。",
-    tags: ["30代","女性","大阪"],
-  },
-  {
-    icon: `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="32" cy="32" r="18"></circle><path d="M14 32h36M32 14v36M20 20l24 24M44 20L20 44"></path></svg>`,
-    title: "家族との関係に転機。星の配置から、距離の取り方を整えた事例。",
-    tags: ["50代","男性","兵庫"],
-  },
-  {
-    icon: `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M32 8l6 16 16 2-12 12 4 18-14-9-14 9 4-18-12-12 16-2z"></path></svg>`,
-    title: "独立への迷いを言語化。背中を押す材料がそろい、半年で開業へ。",
-    tags: ["30代","男性","奈良"],
-  },
-];
+import { getCollection } from "astro:content";
+import CaseModal from "./CaseModal.astro";
+
+const allCases = await getCollection("cases", ({ data }) => !data.draft);
+const sorted = allCases
+  .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99))
+  .slice(0, 8);
+
+const showListLink = allCases.length >= 11;
 ---
+
 <section class="cases" id="cases">
   <div class="cases-head">
     <div class="title-block">
@@ -30,22 +17,91 @@ const cases = [
       <span class="jp">鑑定事例</span>
     </div>
     <div class="cases-controls">
-      <button class="arrow-btn" aria-label="前へ"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2L3 7l6 5"></path></svg></button>
-      <button class="arrow-btn" aria-label="次へ"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 2l6 5-6 5"></path></svg></button>
-      <a class="text-link" href="#">鑑定事例 一覧 <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 7h10M8 3l4 4-4 4"></path></svg></a>
+      <button id="cases-prev" class="arrow-btn" aria-label="前へ">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 2L3 7l6 5"></path>
+        </svg>
+      </button>
+      <button id="cases-next" class="arrow-btn" aria-label="次へ">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M5 2l6 5-6 5"></path>
+        </svg>
+      </button>
+      {showListLink && (
+        <a href="/cases/" class="text-link">
+          鑑定事例 一覧
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 7h10M8 3l4 4-4 4"></path>
+          </svg>
+        </a>
+      )}
     </div>
   </div>
 
-  <div class="case-grid">
-    {cases.map((c) => (
-      <article class="case-card">
-        <div class="case-thumb" set:html={c.icon}></div>
-        <h3 class="case-title">{c.title}</h3>
-        <div class="case-meta">
-          <div class="tags">{c.tags.map(t => <span class="tag">{t}</span>)}</div>
-          <span class="more">More</span>
-        </div>
-      </article>
-    ))}
+  <div class="cases__slider-outer">
+    <div class="cases__track" id="cases-track">
+      {sorted.map((c) => (
+        <article
+          class="case-card cases__card"
+          data-case-id={c.id}
+          role="button"
+          tabindex="0"
+          aria-haspopup="dialog"
+        >
+          <div class="case-thumb cases__thumb">
+            {c.data.image
+              ? <img src={c.data.image} alt={c.data.title} />
+              : (
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2">
+                  <circle cx="32" cy="26" r="10"/>
+                  <path d="M18 52c1.5-8 6-13 14-13s12.5 5 14 13"/>
+                  <circle cx="48" cy="14" r="4" opacity=".4"/>
+                  <path d="M4 32h4M56 32h4M32 4v4M32 56v4" stroke-linecap="round"/>
+                </svg>
+              )
+            }
+          </div>
+          <h3 class="case-title">{c.data.title}</h3>
+          <div class="case-meta">
+            <div class="tags">
+              <span class="tag">{c.data.age}</span>
+              <span class="tag">{c.data.gender}</span>
+              <span class="tag">{c.data.area}</span>
+            </div>
+            <span class="more">More</span>
+          </div>
+        </article>
+      ))}
+    </div>
   </div>
 </section>
+
+<CaseModal cases={sorted} />
+
+<script>
+  const track   = document.getElementById('cases-track');
+  const prevBtn = document.getElementById('cases-prev');
+  const nextBtn = document.getElementById('cases-next');
+
+  function cardScrollAmount() {
+    const card = track?.querySelector('.cases__card');
+    if (!card || !track) return 300;
+    const gap = parseFloat(getComputedStyle(track).columnGap) || 32;
+    return card.offsetWidth + gap;
+  }
+
+  function updateButtons() {
+    if (!track || !prevBtn || !nextBtn) return;
+    prevBtn.disabled = track.scrollLeft <= 0;
+    nextBtn.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+  }
+
+  prevBtn?.addEventListener('click', () => {
+    track?.scrollBy({ left: -cardScrollAmount(), behavior: 'smooth' });
+  });
+  nextBtn?.addEventListener('click', () => {
+    track?.scrollBy({ left: cardScrollAmount(), behavior: 'smooth' });
+  });
+  track?.addEventListener('scroll', updateButtons, { passive: true });
+  updateButtons();
+</script>

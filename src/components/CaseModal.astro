@@ -1,0 +1,153 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { render } from "astro:content";
+
+interface Props {
+  cases: CollectionEntry<"cases">[];
+}
+
+const { cases } = Astro.props;
+
+const rendered = await Promise.all(
+  cases.map(async (c) => {
+    const { Content } = await render(c);
+    return { id: c.id, Content };
+  })
+);
+
+const casesData = cases.map((c) => ({
+  id: c.id,
+  title: c.data.title,
+  age: c.data.age,
+  gender: c.data.gender,
+  area: c.data.area,
+  image: c.data.image ?? "",
+}));
+
+const safeCasesJSON = JSON.stringify(casesData)
+  .replace(/</g, "\\u003c")
+  .replace(/>/g, "\\u003e")
+  .replace(/&/g, "\\u0026");
+---
+
+<!-- Pre-rendered markdown bodies for modal content injection (not visible) -->
+<div class="cases__hidden-bodies" hidden aria-hidden="true">
+  {rendered.map(({ id, Content }) => (
+    <div id={`case-body-${id}`}>
+      <Content />
+    </div>
+  ))}
+</div>
+
+<!-- Modal -->
+<div
+  id="case-modal"
+  class="cases__modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="case-modal-title"
+  hidden
+>
+  <div class="cases__modal-overlay" id="case-modal-overlay"></div>
+  <div class="cases__modal-container">
+    <button class="cases__modal-close" id="case-modal-close" aria-label="閉じる">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </svg>
+    </button>
+    <div class="cases__modal-inner">
+      <div class="cases__modal-image-wrap" id="case-modal-image-wrap"></div>
+      <div class="cases__modal-text">
+        <p class="cases__modal-meta" id="case-modal-meta"></p>
+        <h2 class="cases__modal-title" id="case-modal-title"></h2>
+        <div class="cases__modal-content" id="case-modal-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="cases-data" set:html={safeCasesJSON}></script>
+
+<script>
+  const casesData = JSON.parse(document.getElementById('cases-data').textContent);
+
+  const modal          = document.getElementById('case-modal');
+  const overlay        = document.getElementById('case-modal-overlay');
+  const closeBtn       = document.getElementById('case-modal-close');
+  const modalTitle     = document.getElementById('case-modal-title');
+  const modalMeta      = document.getElementById('case-modal-meta');
+  const modalContent   = document.getElementById('case-modal-content');
+  const modalImageWrap = document.getElementById('case-modal-image-wrap');
+
+  let lastFocused = null;
+
+  function openModal(id) {
+    const c = casesData.find(x => x.id === id);
+    if (!c || !modal) return;
+
+    const bodyEl = document.getElementById('case-body-' + id);
+
+    if (modalTitle)     modalTitle.textContent  = c.title;
+    if (modalMeta)      modalMeta.textContent   = c.age + ' · ' + c.gender + ' · ' + c.area;
+    if (modalContent)   modalContent.innerHTML  = bodyEl ? bodyEl.innerHTML : '';
+
+    if (modalImageWrap) {
+      if (c.image) {
+        const img = document.createElement('img');
+        img.src = c.image; img.alt = c.title; img.className = 'cases__modal-image';
+        modalImageWrap.replaceChildren(img);
+      } else {
+        modalImageWrap.innerHTML =
+          '<div class="cases__modal-image-ph">' +
+          '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2">' +
+          '<circle cx="32" cy="26" r="10"/>' +
+          '<path d="M18 52c1.5-8 6-13 14-13s12.5 5 14 13"/>' +
+          '<circle cx="48" cy="14" r="4" opacity=".4"/>' +
+          '</svg></div>';
+      }
+    }
+
+    lastFocused = document.activeElement;
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    closeBtn?.focus();
+  }
+
+  function closeModal() {
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.style.overflow = '';
+    lastFocused?.focus();
+  }
+
+  document.querySelectorAll('.cases__card').forEach(card => {
+    card.addEventListener('click', () => openModal(card.dataset.caseId));
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openModal(card.dataset.caseId);
+      }
+    });
+  });
+
+  closeBtn?.addEventListener('click', closeModal);
+  overlay?.addEventListener('click', closeModal);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal && !modal.hidden) closeModal();
+  });
+
+  modal?.addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    const focusable = Array.from(modal.querySelectorAll(
+      'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'
+    ));
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last  = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last)  { e.preventDefault(); first.focus(); }
+    }
+  });
+</script>

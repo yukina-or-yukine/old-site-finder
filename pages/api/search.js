@@ -9,13 +9,11 @@ export default async function handler(req, res) {
 
   const baseQuery = region ? `${q} ${region}` : q;
 
-  // 古いサイトが出やすいよう before: フィルターと著作権年キーワードを付加
-  const currentYear = new Date().getFullYear();
-  const cutoff = currentYear - 4;
-  const cpYears = [cutoff - 1, cutoff - 2, cutoff - 3]
+  // 2020年以前の古いサイトを優先的に取得
+  const cpYears = [2019, 2018, 2017, 2016]
     .map(y => `"copyright ${y}"`)
     .join(' OR ');
-  const query = `${baseQuery} (before:${cutoff} OR ${cpYears})`;
+  const query = `${baseQuery} (before:2020 OR ${cpYears})`;
 
   try {
     const r = await fetch('https://google.serper.dev/search', {

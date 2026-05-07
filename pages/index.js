@@ -11,7 +11,8 @@ import FavoritesPanel from '../components/FavoritesPanel';
 import styles from '../styles/Home.module.css';
 
 const FAV_KEY   = 'osf_favorites';
-const MIN_SCORE = 20;
+const MIN_SCORE = 29;
+const MAX_PAGES = 10;
 
 function loadFavs() {
   try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; }
@@ -20,25 +21,40 @@ function saveFavs(favs) {
   localStorage.setItem(FAV_KEY, JSON.stringify(favs));
 }
 
+function getPageRange(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = new Set([1, total]);
+  for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) pages.add(i);
+  const sorted = [...pages].sort((a, b) => a - b);
+  const result = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push('...');
+    result.push(sorted[i]);
+  }
+  return result;
+}
+
 export default function Home() {
   const router = useRouter();
 
-  const [query,          setQuery]          = useState('');
-  const [region,         setRegion]         = useState('');
-  const [results,        setResults]        = useState([]);
-  const [analyses,       setAnalyses]       = useState({});
-  const [loading,        setLoading]        = useState(false);
-  const [error,          setError]          = useState('');
-  const [favorites,      setFavorites]      = useState([]);
-  const [showFavs,       setShowFavs]       = useState(false);
-  const [showBackToTop,  setShowBackToTop]  = useState(false);
-  const [currentPage,    setCurrentPage]    = useState(1);
-  const [hasNextPage,    setHasNextPage]    = useState(false);
+  const [query,           setQuery]           = useState('');
+  const [region,          setRegion]          = useState('');
+  const [results,         setResults]         = useState([]);
+  const [analyses,        setAnalyses]        = useState({});
+  const [loading,         setLoading]         = useState(false);
+  const [error,           setError]           = useState('');
+  const [favorites,       setFavorites]       = useState([]);
+  const [showFavs,        setShowFavs]        = useState(false);
+  const [showBackToTop,   setShowBackToTop]   = useState(false);
+  const [currentPage,     setCurrentPage]     = useState(1);
+  const [hasNextPage,     setHasNextPage]     = useState(false);
+  const [totalPages,      setTotalPages]      = useState(null);
 
   // Queue-based analysis
-  const [analysisQueue,     setAnalysisQueue]     = useState([]);
+  const [analysisQueue,      setAnalysisQueue]      = useState([]);
   const [currentlyAnalyzing, setCurrentlyAnalyzing] = useState(null);
-  const processingRef = useRef(false);
+  const processingRef  = useRef(false);
+  const prevSearchRef  = useRef('');
 
   useEffect(() => { setFavorites(loadFavs()); }, []);
 
@@ -68,8 +84,13 @@ export default function Home() {
       const data = await res.json();
       const items = data.items || [];
       setResults(items);
-      setHasNextPage(items.length === 10);
-      // Pre-queue first 5 items
+      const isLastPage = items.length < 10;
+      setHasNextPage(!isLastPage);
+      setTotalPages(prev => {
+        if (isLastPage) return page;
+        const minKnown = Math.min(page + 1, MAX_PAGES);
+        return prev != null ? Math.max(prev, minKnown) : minKnown;
+      });
       setAnalysisQueue(items.slice(0, 5).map(i => i.url));
     } catch (e) {
       setError(e.message);
@@ -82,9 +103,15 @@ export default function Home() {
     if (!router.isReady) return;
     const { q, region: r, page: p } = router.query;
     if (q) {
-      const qStr = String(q);
-      const rStr = r ? String(r) : '';
+      const qStr    = String(q);
+      const rStr    = r ? String(r) : '';
       const pageNum = p ? Number(p) : 1;
+      // Reset totalPages when query or region changes
+      const searchKey = `${qStr}|${rStr}`;
+      if (searchKey !== prevSearchRef.current) {
+        setTotalPages(null);
+        prevSearchRef.current = searchKey;
+      }
       setQuery(qStr);
       setRegion(rStr);
       setCurrentPage(pageNum);
@@ -93,6 +120,8 @@ export default function Home() {
       setResults([]);
       setQuery('');
       setCurrentPage(1);
+      setTotalPages(null);
+      prevSearchRef.current = '';
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady, router.query]);
@@ -163,7 +192,7 @@ export default function Home() {
   }, []);
 
   const getItemStatus = (url) => {
-    if (analyses[url]) return 'done';
+    if (analyses[url])             return 'done';
     if (currentlyAnalyzing === url) return 'analyzing';
     if (analysisQueue.includes(url)) return 'queued';
     return 'idle';
@@ -226,6 +255,8 @@ export default function Home() {
     router.push('/', undefined, { shallow: true });
   };
 
+  const pageRange = totalPages ? getPageRange(currentPage, totalPages) : null;
+
   return (
     <>
       <Head>
@@ -285,7 +316,7 @@ export default function Home() {
                     「{query}」の検索結果
                     {!analyzing && <span className={styles.resultCount}> {visibleResults.length}件</span>}
                   </h2>
-                  <p className={styles.filterNote}>スコア20以下（新しめ）は非表示</p>
+                  <p className={styles.filterNote}>スコア29以下は非表示</p>
                 </div>
                 <div className={styles.resultsActions}>
                   {analyzing && (
@@ -323,15 +354,31 @@ export default function Home() {
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage <= 1}
                 >
-                  ← 前へ
+                  «
                 </button>
-                <span className={styles.pageNum}>{currentPage} ページ</span>
+
+                {pageRange ? (
+                  pageRange.map((p, i) =>
+                    p === '...'
+                      ? <span key={`e${i}`} className={styles.pageEllipsis}>...</span>
+                      : <button
+                          key={p}
+                          className={`${styles.pageBtn} ${p === currentPage ? styles.pageActive : ''}`}
+                          onClick={() => goToPage(p)}
+                        >
+                          {p}
+                        </button>
+                  )
+                ) : (
+                  <span className={styles.pageEllipsis}>{currentPage}</span>
+                )}
+
                 <button
                   className={styles.pageBtn}
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={!hasNextPage}
                 >
-                  次へ →
+                  »
                 </button>
               </div>
             </div>

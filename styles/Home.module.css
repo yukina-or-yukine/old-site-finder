@@ -439,25 +439,38 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
   margin-top: 24px;
   padding-bottom: 8px;
+  flex-wrap: wrap;
 }
 .pageBtn {
-  padding: 8px 20px;
-  background: #4a90d9;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  background: #f5f5f5;
+  color: #444;
+  border: 1px solid #ddd;
+  border-radius: 6px;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
-.pageBtn:hover:not(:disabled) { background: #357abd; }
-.pageBtn:disabled { background: #ccc; cursor: default; }
-.pageNum {
+.pageBtn:hover:not(:disabled) { background: #e0ecf8; color: #1a60b0; border-color: #4a90d9; }
+.pageBtn:disabled { opacity: 0.4; cursor: default; }
+.pageActive {
+  background: #4a90d9;
+  color: #fff;
+  border-color: #4a90d9;
+  font-weight: 700;
+  pointer-events: none;
+}
+.pageEllipsis {
+  min-width: 28px;
+  text-align: center;
+  color: #aaa;
   font-size: 0.9rem;
-  color: #555;
+  line-height: 36px;
 }
 
 /* Card status states */

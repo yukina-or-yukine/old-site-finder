@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -23,34 +23,41 @@ function saveFavs(favs) {
 export default function Home() {
   const router = useRouter();
 
-  const [query,        setQuery]        = useState('');
-  const [region,       setRegion]       = useState('');
-  const [results,      setResults]      = useState([]);
-  const [analyses,     setAnalyses]     = useState({});
-  const [loading,      setLoading]      = useState(false);
-  const [analyzing,    setAnalyzing]    = useState(false);
-  const [error,        setError]        = useState('');
-  const [favorites,    setFavorites]    = useState([]);
-  const [showFavs,     setShowFavs]     = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [query,          setQuery]          = useState('');
+  const [region,         setRegion]         = useState('');
+  const [results,        setResults]        = useState([]);
+  const [analyses,       setAnalyses]       = useState({});
+  const [loading,        setLoading]        = useState(false);
+  const [error,          setError]          = useState('');
+  const [favorites,      setFavorites]      = useState([]);
+  const [showFavs,       setShowFavs]       = useState(false);
+  const [showBackToTop,  setShowBackToTop]  = useState(false);
+  const [currentPage,    setCurrentPage]    = useState(1);
+  const [hasNextPage,    setHasNextPage]    = useState(false);
+
+  // Queue-based analysis
+  const [analysisQueue,     setAnalysisQueue]     = useState([]);
+  const [currentlyAnalyzing, setCurrentlyAnalyzing] = useState(null);
+  const processingRef = useRef(false);
 
   useEffect(() => { setFavorites(loadFavs()); }, []);
 
-  // トップへ戻るボタンの表示制御
   useEffect(() => {
     const onScroll = () => setShowBackToTop(window.scrollY > 400);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // 実際の検索APIコール（q と r を引数で受け取る）
-  const doSearch = useCallback(async (q, r) => {
+  const doSearch = useCallback(async (q, r, page = 1) => {
     setResults([]);
     setAnalyses({});
+    setAnalysisQueue([]);
+    setCurrentlyAnalyzing(null);
+    processingRef.current = false;
     setError('');
     setLoading(true);
     try {
-      const params = new URLSearchParams({ q });
+      const params = new URLSearchParams({ q, page: String(page) });
       if (r) params.set('region', r);
       const res = await fetch(`/api/search?${params}`);
       if (!res.ok) {
@@ -59,7 +66,11 @@ export default function Home() {
         throw new Error(msg);
       }
       const data = await res.json();
-      setResults(data.items || []);
+      const items = data.items || [];
+      setResults(items);
+      setHasNextPage(items.length === 10);
+      // Pre-queue first 5 items
+      setAnalysisQueue(items.slice(0, 5).map(i => i.url));
     } catch (e) {
       setError(e.message);
     } finally {
@@ -67,78 +78,101 @@ export default function Home() {
     }
   }, []);
 
-  // URL変化（ブラウザバック含む）を監視して検索を実行
   useEffect(() => {
     if (!router.isReady) return;
-    const { q, region: r } = router.query;
+    const { q, region: r, page: p } = router.query;
     if (q) {
       const qStr = String(q);
       const rStr = r ? String(r) : '';
+      const pageNum = p ? Number(p) : 1;
       setQuery(qStr);
       setRegion(rStr);
-      doSearch(qStr, rStr);
+      setCurrentPage(pageNum);
+      doSearch(qStr, rStr, pageNum);
     } else {
       setResults([]);
       setQuery('');
+      setCurrentPage(1);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady, router.query]);
 
-  // 検索トリガー：URLを更新する（履歴に積む）→ 上の useEffect が検索を実行
-  const search = useCallback((q) => {
+  const pushUrl = useCallback((q, r, page) => {
     const params = new URLSearchParams({ q });
-    if (region) params.set('region', region);
+    if (r) params.set('region', r);
+    if (page && page > 1) params.set('page', String(page));
     router.push(`/?${params.toString()}`, undefined, { shallow: true });
-  }, [region, router]);
+  }, [router]);
 
-  // 地域フィルター変更：結果表示中なら即再検索、未検索ならregionだけ更新
+  const search = useCallback((q) => {
+    pushUrl(q, region, 1);
+  }, [region, pushUrl]);
+
   const handleRegionChange = useCallback((newRegion) => {
     setRegion(newRegion);
-    if (query) {
-      const params = new URLSearchParams({ q: query });
-      if (newRegion) params.set('region', newRegion);
-      router.push(`/?${params.toString()}`, undefined, { shallow: true });
-    }
-  }, [query, router]);
+    if (query) pushUrl(query, newRegion, 1);
+  }, [query, pushUrl]);
 
-  // 検索結果が出たら1件ずつ古さ分析
+  const goToPage = useCallback((page) => {
+    pushUrl(query, region, page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [query, region, pushUrl]);
+
+  // Queue processor
   useEffect(() => {
-    if (results.length === 0) return;
-    let cancelled = false;
-    setAnalyzing(true);
+    if (processingRef.current || analysisQueue.length === 0) return;
+    const url = analysisQueue[0];
+    if (analyses[url]) {
+      setAnalysisQueue(prev => prev.slice(1));
+      return;
+    }
 
-    (async () => {
-      for (const item of results) {
-        if (cancelled) break;
-        const cacheKey = `osf_analyze_${item.url}`;
-        const cached = (() => {
-          try { return JSON.parse(localStorage.getItem(cacheKey)); } catch { return null; }
-        })();
-        if (cached) {
-          setAnalyses(prev => ({ ...prev, [item.url]: cached }));
-        } else {
-          try {
-            const r = await fetch(`/api/analyze?url=${encodeURIComponent(item.url)}`);
-            if (r.ok) {
-              const data = await r.json();
-              localStorage.setItem(cacheKey, JSON.stringify(data));
-              if (!cancelled) setAnalyses(prev => ({ ...prev, [item.url]: data }));
-            }
-          } catch {}
-        }
-        await new Promise(r => setTimeout(r, 800));
-      }
-      if (!cancelled) setAnalyzing(false);
-    })();
+    processingRef.current = true;
+    setCurrentlyAnalyzing(url);
 
-    return () => { cancelled = true; };
-  }, [results]);
+    const cacheKey = `osf_analyze_${url}`;
+    const cached = (() => { try { return JSON.parse(localStorage.getItem(cacheKey)); } catch { return null; } })();
 
-  // 残り分析件数
+    if (cached) {
+      setAnalyses(prev => ({ ...prev, [url]: cached }));
+      setAnalysisQueue(prev => prev.slice(1));
+      setCurrentlyAnalyzing(null);
+      processingRef.current = false;
+    } else {
+      fetch(`/api/analyze?url=${encodeURIComponent(url)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data) {
+            localStorage.setItem(cacheKey, JSON.stringify(data));
+            setAnalyses(prev => ({ ...prev, [url]: data }));
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          setTimeout(() => {
+            setAnalysisQueue(prev => prev.slice(1));
+            setCurrentlyAnalyzing(null);
+            processingRef.current = false;
+          }, 800);
+        });
+    }
+  }, [analysisQueue, analyses]);
+
+  const handleCardVisible = useCallback((url) => {
+    setAnalysisQueue(prev => prev.includes(url) ? prev : [...prev, url]);
+  }, []);
+
+  const getItemStatus = (url) => {
+    if (analyses[url]) return 'done';
+    if (currentlyAnalyzing === url) return 'analyzing';
+    if (analysisQueue.includes(url)) return 'queued';
+    return 'idle';
+  };
+
   const analyzedCount  = Object.keys(analyses).length;
+  const analyzing      = currentlyAnalyzing !== null || analysisQueue.length > 0;
   const remainingCount = results.length - analyzedCount;
 
-  // スコア 20 超 or 未分析のみ表示
   const visibleResults = results.filter(item => {
     const a = analyses[item.url];
     return !a || a.score > MIN_SCORE;
@@ -201,7 +235,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Sigmar&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Skranji&display=swap" rel="stylesheet" />
       </Head>
 
       <div className={styles.container}>
@@ -226,7 +260,7 @@ export default function Home() {
         <main className={styles.main}>
           <div className={styles.searchSection}>
             <SearchBar onSearch={search} loading={loading} />
-            <RegionFilter value={region || '全国'} onChange={handleRegionChange} />
+            {!results.length && <RegionFilter value={region || '全国'} onChange={handleRegionChange} />}
           </div>
 
           {error && <p className={styles.error}>⚠️ {error}</p>}
@@ -240,6 +274,11 @@ export default function Home() {
 
           {results.length > 0 && (
             <div className={styles.results}>
+              <div className={styles.filterSection}>
+                <span className={styles.filterSectionLabel}>🗾 地域を絞り込む</span>
+                <RegionFilter value={region || '全国'} onChange={handleRegionChange} />
+              </div>
+
               <div className={styles.resultsHeader}>
                 <div>
                   <h2 className={styles.sectionTitle}>
@@ -265,24 +304,36 @@ export default function Home() {
                   <span>検索キーワードや地域を変えてお試しください。</span>
                 </p>
               ) : (
-                visibleResults.map(item => (
+                results.map(item => (
                   <ResultCard
                     key={item.url}
                     item={item}
                     analysis={analyses[item.url] || null}
                     isFav={favorites.some(f => f.url === item.url)}
                     onToggleFav={toggleFav}
+                    status={getItemStatus(item.url)}
+                    onVisible={handleCardVisible}
                   />
                 ))
               )}
 
-              {!analyzing && (
-                <div className={styles.bottomBackToTop}>
-                  <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                    ↑ トップへ戻る
-                  </button>
-                </div>
-              )}
+              <div className={styles.pagination}>
+                <button
+                  className={styles.pageBtn}
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                >
+                  ← 前へ
+                </button>
+                <span className={styles.pageNum}>{currentPage} ページ</span>
+                <button
+                  className={styles.pageBtn}
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={!hasNextPage}
+                >
+                  次へ →
+                </button>
+              </div>
             </div>
           )}
         </main>

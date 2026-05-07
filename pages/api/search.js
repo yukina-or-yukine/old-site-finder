@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  const { q, region } = req.query;
+  const { q, region, page } = req.query;
   if (!q) return res.status(400).json({ error: 'q is required' });
 
   const apiKey = process.env.SERPER_API_KEY?.trim();
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
         'X-API-KEY': apiKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ q: query, gl: 'jp', hl: 'ja', num: 10 }),
+      body: JSON.stringify({ q: query, gl: 'jp', hl: 'ja', num: 10, page: page ? Number(page) : 1 }),
     });
 
     if (!r.ok) {

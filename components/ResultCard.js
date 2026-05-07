@@ -1,12 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from '../styles/Home.module.css';
 
-export default function ResultCard({ item, analysis, isFav, onToggleFav }) {
+export default function ResultCard({ item, analysis, isFav, onToggleFav, status = 'idle', onVisible }) {
   const [imgError, setImgError] = useState(false);
+  const cardRef = useRef(null);
   const badge = analysis?.badge;
 
+  useEffect(() => {
+    if (!onVisible || status !== 'idle') return;
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { onVisible(item.url); observer.disconnect(); } },
+      { rootMargin: '200px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [item.url, status, onVisible]);
+
   return (
-    <div className={styles.card}>
+    <div ref={cardRef} className={styles.card}>
       <div className={styles.cardHeader}>
         <div className={styles.cardSite}>
           {!imgError ? (
@@ -38,7 +51,7 @@ export default function ResultCard({ item, analysis, isFav, onToggleFav }) {
       <p className={styles.cardSnippet}>{item.snippet}</p>
 
       <div className={styles.cardMeta}>
-        {analysis ? (
+        {status === 'done' && analysis ? (
           <>
             <span
               className={styles.badge}
@@ -80,8 +93,12 @@ export default function ResultCard({ item, analysis, isFav, onToggleFav }) {
               </a>
             )}
           </>
-        ) : (
+        ) : status === 'analyzing' ? (
           <span className={styles.analyzing}>分析中...</span>
+        ) : status === 'queued' ? (
+          <span className={styles.waiting}>分析待ち</span>
+        ) : (
+          <span className={styles.idle}>—</span>
         )}
       </div>
     </div>

@@ -4,7 +4,9 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.GOOGLE_API_KEY;
   const cseId  = process.env.GOOGLE_CSE_ID;
-  if (!apiKey || !cseId) return res.status(500).json({ error: 'API keys not configured' });
+  if (!apiKey || !cseId) return res.status(500).json({
+    error: 'Vercel の環境変数 GOOGLE_API_KEY と GOOGLE_CSE_ID が設定されていません',
+  });
 
   const query = region ? `${q} ${region}` : q;
   const url = new URL('https://www.googleapis.com/customsearch/v1');

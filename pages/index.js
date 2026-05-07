@@ -40,7 +40,11 @@ export default function Home() {
     try {
       const params = new URLSearchParams({ q, ...(region && { region }) });
       const r = await fetch(`/api/search?${params}`);
-      if (!r.ok) { const d = await r.json(); throw new Error(d.error); }
+      if (!r.ok) {
+        let msg = `HTTP ${r.status}`;
+        try { msg = (await r.json()).error || msg; } catch {}
+        throw new Error(msg);
+      }
       const data = await r.json();
       setResults(data.items || []);
     } catch (e) {
@@ -129,6 +133,7 @@ export default function Home() {
         <title>古いサイト発見ツール</title>
         <meta name="description" content="古くなったWebサイトを発見・評価するツール" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
 
       <div className={styles.container}>
@@ -154,14 +159,14 @@ export default function Home() {
             <RegionFilter value={region || '全国'} onChange={setRegion} />
           </div>
 
-          {!results.length && !loading && (
+          {error && <p className={styles.error}>⚠️ {error}</p>}
+
+          {!results.length && !loading && !error && (
             <>
               <CategoryGrid onSelect={search} />
               <TagCloud onSelect={search} />
             </>
           )}
-
-          {error && <p className={styles.error}>エラー: {error}</p>}
 
           {results.length > 0 && (
             <div className={styles.results}>

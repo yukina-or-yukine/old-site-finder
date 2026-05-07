@@ -13,6 +13,8 @@
 .title {
   font-size: 2rem;
   margin: 0 0 8px;
+  font-family: 'Sigmar', cursive;
+  letter-spacing: 0.02em;
 }
 .titleLink {
   color: inherit;
@@ -347,9 +349,15 @@
 
 .filterNote {
   font-size: 0.75rem;
-  color: #999;
+  color: #aaa;
   font-weight: 400;
-  margin-left: 8px;
+  margin: 2px 0 0;
+}
+.resultCount {
+  font-size: 0.9rem;
+  color: #888;
+  font-weight: 400;
+  margin-left: 6px;
 }
 
 .noOldSites {
@@ -364,7 +372,28 @@
 }
 .noOldSites span { font-size: 0.85rem; color: #aaa; }
 
-/* Back to top */
+/* Bottom back to top (results footer) */
+.bottomBackToTop {
+  text-align: center;
+  margin-top: 32px;
+  padding-bottom: 8px;
+}
+.bottomBackToTop button {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 8px 24px;
+  font-size: 0.9rem;
+  color: #666;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.bottomBackToTop button:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+/* Floating back to top */
 .backToTop {
   position: fixed;
   bottom: 28px;

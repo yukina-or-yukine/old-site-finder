@@ -91,6 +91,16 @@ export default function Home() {
     router.push(`/?${params.toString()}`, undefined, { shallow: true });
   }, [region, router]);
 
+  // 地域フィルター変更：結果表示中なら即再検索、未検索ならregionだけ更新
+  const handleRegionChange = useCallback((newRegion) => {
+    setRegion(newRegion);
+    if (query) {
+      const params = new URLSearchParams({ q: query });
+      if (newRegion) params.set('region', newRegion);
+      router.push(`/?${params.toString()}`, undefined, { shallow: true });
+    }
+  }, [query, router]);
+
   // 検索結果が出たら1件ずつ古さ分析
   useEffect(() => {
     if (results.length === 0) return;
@@ -123,6 +133,10 @@ export default function Home() {
 
     return () => { cancelled = true; };
   }, [results]);
+
+  // 残り分析件数
+  const analyzedCount  = Object.keys(analyses).length;
+  const remainingCount = results.length - analyzedCount;
 
   // スコア 20 超 or 未分析のみ表示
   const visibleResults = results.filter(item => {
@@ -185,6 +199,9 @@ export default function Home() {
         <meta name="description" content="古くなったWebサイトを発見・評価するツール" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Sigmar&display=swap" rel="stylesheet" />
       </Head>
 
       <div className={styles.container}>
@@ -209,7 +226,7 @@ export default function Home() {
         <main className={styles.main}>
           <div className={styles.searchSection}>
             <SearchBar onSearch={search} loading={loading} />
-            <RegionFilter value={region || '全国'} onChange={setRegion} />
+            <RegionFilter value={region || '全国'} onChange={handleRegionChange} />
           </div>
 
           {error && <p className={styles.error}>⚠️ {error}</p>}
@@ -224,12 +241,17 @@ export default function Home() {
           {results.length > 0 && (
             <div className={styles.results}>
               <div className={styles.resultsHeader}>
-                <h2 className={styles.sectionTitle}>
-                  古いサイト {analyzing ? '...' : `${visibleResults.length}件`}
-                  <span className={styles.filterNote}>（スコア20以下は非表示）</span>
-                </h2>
+                <div>
+                  <h2 className={styles.sectionTitle}>
+                    「{query}」の検索結果
+                    {!analyzing && <span className={styles.resultCount}> {visibleResults.length}件</span>}
+                  </h2>
+                  <p className={styles.filterNote}>スコア20以下（新しめ）は非表示</p>
+                </div>
                 <div className={styles.resultsActions}>
-                  {analyzing && <span className={styles.analyzingBadge}>⏳ 分析中...</span>}
+                  {analyzing && (
+                    <span className={styles.analyzingBadge}>⏳ 分析中... (残り約{remainingCount}件)</span>
+                  )}
                   {!analyzing && visibleResults.length > 0 && (
                     <button className={styles.csvBtn} onClick={exportAllCSV}>CSV出力</button>
                   )}
@@ -252,6 +274,14 @@ export default function Home() {
                     onToggleFav={toggleFav}
                   />
                 ))
+              )}
+
+              {!analyzing && (
+                <div className={styles.bottomBackToTop}>
+                  <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                    ↑ トップへ戻る
+                  </button>
+                </div>
               )}
             </div>
           )}

@@ -338,3 +338,22 @@
 
 /* Main */
 .main { padding-top: 8px; }
+
+.filterNote {
+  font-size: 0.75rem;
+  color: #999;
+  font-weight: 400;
+  margin-left: 8px;
+}
+
+.noOldSites {
+  text-align: center;
+  padding: 48px 16px;
+  color: #888;
+  font-size: 0.95rem;
+  line-height: 2;
+  background: #fafafa;
+  border: 1px dashed #ddd;
+  border-radius: 12px;
+}
+.noOldSites span { font-size: 0.85rem; color: #aaa; }

@@ -9,6 +9,7 @@ import FavoritesPanel from '../components/FavoritesPanel';
 import styles from '../styles/Home.module.css';
 
 const FAV_KEY = 'osf_favorites';
+const MIN_SCORE = 20; // これ以下のスコア（新しめ）は非表示
 
 function loadFavs() {
   try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; }
@@ -91,9 +92,17 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [results]);
 
+  // スコアが MIN_SCORE 超のもの＋未分析のものを表示対象とする
+  const visibleResults = results.filter(item => {
+    const a = analyses[item.url];
+    return !a || a.score > MIN_SCORE;
+  });
+  const allAnalyzed = results.length > 0 && results.every(item => analyses[item.url]);
+  const noOldSites  = allAnalyzed && visibleResults.length === 0;
+
   const exportAllCSV = () => {
     const header = 'タイトル,URL,古さスコア,バッジ,最終確認年,著作権年,SSL,モバイル対応,Flash';
-    const rows = results.map(item => {
+    const rows = visibleResults.map(item => {
       const a = analyses[item.url];
       return [
         `"${item.title.replace(/"/g, '""')}"`,
@@ -171,24 +180,37 @@ export default function Home() {
           {results.length > 0 && (
             <div className={styles.results}>
               <div className={styles.resultsHeader}>
-                <h2 className={styles.sectionTitle}>検索結果 ({results.length}件)</h2>
+                <h2 className={styles.sectionTitle}>
+                  古いサイト {analyzing ? '...' : `${visibleResults.length}件`}
+                  <span className={styles.filterNote}>（スコア20以下は非表示）</span>
+                </h2>
                 <div className={styles.resultsActions}>
                   {analyzing && <span className={styles.analyzingBadge}>⏳ 分析中...</span>}
-                  <button className={styles.csvBtn} onClick={exportAllCSV}>CSV出力</button>
+                  {!analyzing && visibleResults.length > 0 && (
+                    <button className={styles.csvBtn} onClick={exportAllCSV}>CSV出力</button>
+                  )}
                   <button className={styles.backBtn} onClick={() => { setResults([]); setQuery(''); }}>
                     ← 戻る
                   </button>
                 </div>
               </div>
-              {results.map(item => (
-                <ResultCard
-                  key={item.url}
-                  item={item}
-                  analysis={analyses[item.url] || null}
-                  isFav={favorites.some(f => f.url === item.url)}
-                  onToggleFav={toggleFav}
-                />
-              ))}
+
+              {noOldSites ? (
+                <p className={styles.noOldSites}>
+                  🔍 古いサイトが見つかりませんでした。<br />
+                  <span>検索キーワードや地域を変えてお試しください。</span>
+                </p>
+              ) : (
+                visibleResults.map(item => (
+                  <ResultCard
+                    key={item.url}
+                    item={item}
+                    analysis={analyses[item.url] || null}
+                    isFav={favorites.some(f => f.url === item.url)}
+                    onToggleFav={toggleFav}
+                  />
+                ))
+              )}
             </div>
           )}
         </main>

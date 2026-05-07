@@ -7,7 +7,15 @@ export default async function handler(req, res) {
     error: 'Vercel の環境変数 SERPER_API_KEY が設定されていません',
   });
 
-  const query = region ? `${q} ${region}` : q;
+  const baseQuery = region ? `${q} ${region}` : q;
+
+  // 古いサイトが出やすいよう before: フィルターと著作権年キーワードを付加
+  const currentYear = new Date().getFullYear();
+  const cutoff = currentYear - 4;
+  const cpYears = [cutoff - 1, cutoff - 2, cutoff - 3]
+    .map(y => `"copyright ${y}"`)
+    .join(' OR ');
+  const query = `${baseQuery} (before:${cutoff} OR ${cpYears})`;
 
   try {
     const r = await fetch('https://google.serper.dev/search', {

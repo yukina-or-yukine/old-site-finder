@@ -12,7 +12,6 @@ import styles from '../styles/Home.module.css';
 
 const FAV_KEY   = 'osf_favorites';
 const MIN_SCORE = 29;
-const MAX_PAGES = 10;
 
 function loadFavs() {
   try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; }
@@ -22,7 +21,8 @@ function saveFavs(favs) {
 }
 
 function getPageRange(current, total) {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (total <= 9) return Array.from({ length: total }, (_, i) => i + 1);
+  // Show 1-8 + ellipsis + last, with current ±2 always visible
   const pages = new Set([1, total]);
   for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) pages.add(i);
   const sorted = [...pages].sort((a, b) => a - b);
@@ -47,14 +47,12 @@ export default function Home() {
   const [showFavs,        setShowFavs]        = useState(false);
   const [showBackToTop,   setShowBackToTop]   = useState(false);
   const [currentPage,     setCurrentPage]     = useState(1);
-  const [hasNextPage,     setHasNextPage]     = useState(false);
-  const [totalPages,      setTotalPages]      = useState(null);
+  const [totalPages,      setTotalPages]      = useState(1);
 
   // Queue-based analysis
   const [analysisQueue,      setAnalysisQueue]      = useState([]);
   const [currentlyAnalyzing, setCurrentlyAnalyzing] = useState(null);
-  const processingRef  = useRef(false);
-  const prevSearchRef  = useRef('');
+  const processingRef = useRef(false);
 
   useEffect(() => { setFavorites(loadFavs()); }, []);
 
@@ -84,13 +82,7 @@ export default function Home() {
       const data = await res.json();
       const items = data.items || [];
       setResults(items);
-      const isLastPage = items.length < 10;
-      setHasNextPage(!isLastPage);
-      setTotalPages(prev => {
-        if (isLastPage) return page;
-        const minKnown = Math.min(page + 1, MAX_PAGES);
-        return prev != null ? Math.max(prev, minKnown) : minKnown;
-      });
+      setTotalPages(data.totalPages || 1);
       setAnalysisQueue(items.slice(0, 5).map(i => i.url));
     } catch (e) {
       setError(e.message);
@@ -106,12 +98,6 @@ export default function Home() {
       const qStr    = String(q);
       const rStr    = r ? String(r) : '';
       const pageNum = p ? Number(p) : 1;
-      // Reset totalPages when query or region changes
-      const searchKey = `${qStr}|${rStr}`;
-      if (searchKey !== prevSearchRef.current) {
-        setTotalPages(null);
-        prevSearchRef.current = searchKey;
-      }
       setQuery(qStr);
       setRegion(rStr);
       setCurrentPage(pageNum);
@@ -120,8 +106,7 @@ export default function Home() {
       setResults([]);
       setQuery('');
       setCurrentPage(1);
-      setTotalPages(null);
-      prevSearchRef.current = '';
+      setTotalPages(1);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady, router.query]);
@@ -192,7 +177,7 @@ export default function Home() {
   }, []);
 
   const getItemStatus = (url) => {
-    if (analyses[url])             return 'done';
+    if (analyses[url])              return 'done';
     if (currentlyAnalyzing === url) return 'analyzing';
     if (analysisQueue.includes(url)) return 'queued';
     return 'idle';
@@ -201,6 +186,7 @@ export default function Home() {
   const analyzedCount  = Object.keys(analyses).length;
   const analyzing      = currentlyAnalyzing !== null || analysisQueue.length > 0;
   const remainingCount = results.length - analyzedCount;
+  const hasNextPage    = currentPage < totalPages;
 
   const visibleResults = results.filter(item => {
     const a = analyses[item.url];
@@ -255,8 +241,6 @@ export default function Home() {
     router.push('/', undefined, { shallow: true });
   };
 
-  const pageRange = totalPages ? getPageRange(currentPage, totalPages) : null;
-
   return (
     <>
       <Head>
@@ -307,7 +291,7 @@ export default function Home() {
             <div className={styles.results}>
               <div className={styles.filterSection}>
                 <span className={styles.filterSectionLabel}>🗾 地域を絞り込む</span>
-                <RegionFilter value={region || '全国'} onChange={handleRegionChange} />
+                <RegionFilter value={region || '全国'} onChange={handleRegionChange} showLabel={false} />
               </div>
 
               <div className={styles.resultsHeader}>
@@ -356,23 +340,17 @@ export default function Home() {
                 >
                   «
                 </button>
-
-                {pageRange ? (
-                  pageRange.map((p, i) =>
-                    p === '...'
-                      ? <span key={`e${i}`} className={styles.pageEllipsis}>...</span>
-                      : <button
-                          key={p}
-                          className={`${styles.pageBtn} ${p === currentPage ? styles.pageActive : ''}`}
-                          onClick={() => goToPage(p)}
-                        >
-                          {p}
-                        </button>
-                  )
-                ) : (
-                  <span className={styles.pageEllipsis}>{currentPage}</span>
+                {getPageRange(currentPage, totalPages).map((p, i) =>
+                  p === '...'
+                    ? <span key={`e${i}`} className={styles.pageEllipsis}>...</span>
+                    : <button
+                        key={p}
+                        className={`${styles.pageBtn} ${p === currentPage ? styles.pageActive : ''}`}
+                        onClick={() => goToPage(p)}
+                      >
+                        {p}
+                      </button>
                 )}
-
                 <button
                   className={styles.pageBtn}
                   onClick={() => goToPage(currentPage + 1)}

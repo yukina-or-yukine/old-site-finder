@@ -25,10 +25,11 @@ export default async function handler(req, res) {
   // SSL check
   try { hasSSL = new URL(url).protocol === 'https:'; } catch {}
 
-  // Wayback Machine availability
+  // Wayback Machine availability — 5s timeout, no retry to avoid blocking
   const wb = await fetchWithRetry(
     `https://archive.org/wayback/available?url=${encodeURIComponent(url)}`,
-    {}
+    { signal: AbortSignal.timeout(5000) },
+    1
   );
   if (wb) {
     const wbData = await wb.json();

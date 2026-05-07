@@ -12,10 +12,10 @@ const PREFECTURES = [
   '福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県',
 ];
 
-export default function RegionFilter({ value, onChange }) {
+export default function RegionFilter({ value, onChange, showLabel = true }) {
   return (
     <div className={styles.regionWrapper}>
-      <label className={styles.regionLabel}>地域フィルター</label>
+      {showLabel && <label className={styles.regionLabel}>地域フィルター</label>}
       <select
         value={value}
         onChange={e => onChange(e.target.value === '全国' ? '' : e.target.value)}

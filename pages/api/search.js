@@ -9,11 +9,12 @@ export default async function handler(req, res) {
 
   const baseQuery = region ? `${q} ${region}` : q;
 
-  // 2020年以前の古いサイトを優先的に取得
+  // 2020年以前の古いサイトを優先的に取得 + 行政・政府・PDF除外
   const cpYears = [2019, 2018, 2017, 2016]
     .map(y => `"copyright ${y}"`)
     .join(' OR ');
-  const query = `${baseQuery} (before:2020 OR ${cpYears})`;
+  const exclude = '-site:go.jp -site:lg.jp -site:ac.jp -site:or.jp -filetype:pdf';
+  const query = `${baseQuery} (before:2020 OR ${cpYears}) ${exclude}`;
 
   try {
     const r = await fetch('https://google.serper.dev/search', {
@@ -42,10 +43,11 @@ export default async function handler(req, res) {
       displayUrl: item.displayLink || new URL(item.link).hostname,
     }));
 
-    res.json({
-      items,
-      totalResults: data.searchInformation?.totalResults || String(items.length),
-    });
+    const totalStr = String(data.searchInformation?.totalResults || '0').replace(/[^0-9]/g, '');
+    const totalNum = parseInt(totalStr, 10) || 0;
+    const totalPages = Math.min(Math.max(1, Math.ceil(totalNum / 10)), 10);
+
+    res.json({ items, totalPages });
   } catch (e) {
     console.error('[search] fetch error:', e.message);
     res.status(500).json({ error: e.message });

@@ -6,7 +6,15 @@
       "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\USER\\\\my-site\" -Force)",
-      "Bash(Select-Object -Property Name, PSIsContainer)"
+      "Bash(Select-Object -Property Name, PSIsContainer)",
+      "Bash(gh repo *)",
+      "PowerShell(gh repo *)",
+      "PowerShell(winget install *)",
+      "PowerShell(gh auth *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(git *)",
+      "Bash(npm install *)",
+      "Bash(git remote *)"
     ]
   }
 }
